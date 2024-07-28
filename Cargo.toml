@@ -1,10 +1,13 @@
 [package]
 name = "microcheby"
+description = "no_std friendly single variable function approximation using Chebyshev polynomials."
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-categories = []
-keywords=[]
+repository = "https://github.com/stuffmatic/microcheby"
+readme = "README.md"
+categories = ["mathematics", "no-std", "no-std::no-alloc", "science"]
+keywords=["chebyshev", "approximation", "polynomial", "math"]
 exclude=[]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
