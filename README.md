@@ -30,6 +30,6 @@ Sufficiently well behaved functions can be expressed as an infinite weighted sum
 
 Below are some graphs showing how the approximation converges to the target function 
 as the number of terms in the expansion increases. For smoother target functions, convergence
-is generally faster.
+is typically faster.
 
 ![](plots/approximations.png)
