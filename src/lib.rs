@@ -29,7 +29,7 @@
 //! Sufficiently well behaved functions can be expressed as an infinite weighted
 //! sum of so called [Chebyshev polynomials](https://en.wikipedia.org/wiki/Chebyshev_polynomials) of increasing order. 
 //! Such a sum is known as a Chebyshev expansion.
-//! If the function is smooth enough, the coefficients (weights) will
+//! If the function is smooth enough, the coefficients (weights) of the expansion will
 //! typically converge to zero quickly and only the first few terms are needed to get a good approximation.
 //! For a truncated expansion with _n_ terms, an estimate of the approximation error is given by
 //! the magnitude of coefficient _n+1_.
@@ -54,7 +54,7 @@
 //!
 //! Computing expansion coefficients requires an accurate cosine function and potentially costly
 //! function evaluations, so it is sometimes desirable to precompute the coefficients
-//! and use them to instantiate the expansion.
+//! and then use them to instantiate the expansion.
 //!
 //! ```
 //! use microcheby::ChebyshevExpansion;
@@ -62,11 +62,11 @@
 //! // Compute a 6 term expansion approximating the square root of x on the interval [0.1, 1.0]
 //! let sqrt_exp = ChebyshevExpansion::<6>::fit(0.1, 1.0, |x| x.sqrt());
 //!
-//! // x_min, x_max and coeffs are needed to instantiate the approximation
+//! // x_min, x_max and coeffs are needed to instantiate the expansion.
 //! // You can either print them to the terminal like this or use the associated getters.
 //! println!("{sqrt_exp}");
 //!
-//! // Instantiate the approximation computed above using arguments copied from the terminal.
+//! // Instantiate the expansion computed above using arguments copied from the terminal.
 //! let exp = ChebyshevExpansion::new(
 //!     0.1,
 //!     1.0,
@@ -85,7 +85,7 @@
 //! // Compute a 6 term expansion approximating the square root of x on the interval [0.1, 1.0]
 //! let sqrt_exp = ChebyshevExpansion::<6>::fit(0.1, 1.0, |x| x.sqrt());
 //!
-//! // x_min, x_scale and coeffs_internal are needed to instantiate the approximation
+//! // x_min, x_scale and coeffs_internal are needed to instantiate the expansion
 //! // at compile time since floating point operations are not allowed in constant expressions.
 //! // You can either print them to the terminal like this or get them using a debugger.
 //! println!("{:?}", sqrt_exp);
@@ -296,7 +296,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
     ///
     /// # Arguments
     /// 
-    /// * `x` - Evaluate the approximation at this x value.
+    /// * `x` - Evaluate the expansion at this x value.
     pub fn eval(&self, x: f32) -> f32 {
         let x_rel_2 = -2.0 + (x - self.x_min) * self.range_scale;
         let mut d = 0.0;
@@ -316,7 +316,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
     ///
     /// # Arguments
     /// 
-    /// * `x` - Evaluate the approximation at this x value.
+    /// * `x` - Evaluate the expansion at this x value.
     /// * `n` - Evaluate this many terms.
     pub fn eval_trunc(&self, x: f32, n: usize) -> f32 {
         let x_rel_2 = -2.0 + (x - self.x_min) * self.range_scale;
@@ -337,7 +337,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
     /// i.e if coefficients 0, 2, 4... are (close to) zero.
     /// 
     /// # Arguments
-    /// * `eps` - Count coefficients with an absolute value less than this as being zero.
+    /// * `eps` - Threat coefficients with an absolute value less than this as being zero.
     pub fn is_odd(&self, eps: f32) -> bool {
         for ci in self.coeffs_internal.iter().step_by(2) {
             if ci.abs() > eps {
@@ -352,7 +352,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
     /// i.e if coefficients 1, 3, 5... are (close to) zero.
     /// 
     /// # Arguments
-    /// * `eps` - Count coefficients with an absolute value less than this as being zero.
+    /// * `eps` - Threat coefficients with an absolute value less than this as being zero.
     pub fn is_even(&self, eps: f32) -> bool {
         for (i, ci) in self.coeffs_internal.iter().skip(1).step_by(2).enumerate() {
             let scale = if i == 0 { 2.0 } else { 1.0 }; // account for "baked" c0 scale of 0.5
@@ -379,7 +379,7 @@ impl ChebyshevExpansion<2> {
     /// Optimized, loop free evaluation of two term expansions.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value.
+    /// * `x` - Evaluate the expansion at this x value.
     pub fn eval_2(&self, x: f32) -> f32 {
         let x_rel_2 = -2.0 + (x - self.x_min) * self.range_scale;
         0.5 * x_rel_2 * self.coeffs_internal[1] + self.coeffs_internal[0]
@@ -389,7 +389,7 @@ impl ChebyshevExpansion<2> {
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value. It is assumed that `-1.0 <= x <= 1.0`.
+    /// * `x` - Evaluate the expansion at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_2_neg1_to_1(&self, x: f32) -> f32 {
         let x_rel_2 = 2.0 * x;
         0.5 * x_rel_2 * self.coeffs_internal[1] + self.coeffs_internal[0]
@@ -400,7 +400,7 @@ impl ChebyshevExpansion<3> {
     /// Optimized, loop free evaluation of three term expansions.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value.
+    /// * `x` - Evaluate the expansion at this x value.
     pub fn eval_3(&self, x: f32) -> f32 {
         let x_rel_2 = -2.0 + (x - self.x_min) * self.range_scale;
         let d_2 = self.coeffs_internal[2];
@@ -412,7 +412,7 @@ impl ChebyshevExpansion<3> {
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value. It is assumed that `-1.0 <= x <= 1.0`.
+    /// * `x` - Evaluate the expansion at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_3_neg1_to_1(self, x: f32) -> f32 {
         let x_rel_2 = 2.0 * x;
         let d_2 = self.coeffs_internal[2];
@@ -425,7 +425,7 @@ impl ChebyshevExpansion<4> {
     /// Optimized, loop free evaluation of four term expansions.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value.
+    /// * `x` - Evaluate the expansion at this x value.
     pub fn eval_4(&self, x: f32) -> f32 {
         let x_rel_2 = -2.0 + (x - self.x_min) * self.range_scale;
         let d_3 = self.coeffs_internal[3];
@@ -438,7 +438,7 @@ impl ChebyshevExpansion<4> {
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value. It is assumed that `-1.0 <= x <= 1.0`.
+    /// * `x` - Evaluate the expansion at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_4_neg1_to_1(&self, x: f32) -> f32 {
         let x_rel_2 = 2.0 * x;
         let d_3 = self.coeffs_internal[3];
@@ -452,7 +452,7 @@ impl ChebyshevExpansion<5> {
     /// Optimized, loop free evaluation of five term expansions.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value.
+    /// * `x` - Evaluate the expansion at this x value.
     pub fn eval_5(&self, x: f32) -> f32 {
         let x_rel_2 = -2.0 + (x - self.x_min) * self.range_scale;
         let d_4 = self.coeffs_internal[4];
@@ -466,7 +466,7 @@ impl ChebyshevExpansion<5> {
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value. It is assumed that `-1.0 <= x <= 1.0`.
+    /// * `x` - Evaluate the expansion at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_5_neg1_to_1(&self, x: f32) -> f32 {
         let x_rel_2 = 2.0 * x;
         let d_4 = self.coeffs_internal[4];
@@ -481,7 +481,7 @@ impl ChebyshevExpansion<6> {
     /// Optimized, loop free evaluation of six term expansions.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value. 
+    /// * `x` - Evaluate the expansion at this x value. 
     pub fn eval_6(&self, x: f32) -> f32 {
         let x_rel_2 = -2.0 + (x - self.x_min) * self.range_scale;
         let d_5 = self.coeffs_internal[5];
@@ -496,7 +496,7 @@ impl ChebyshevExpansion<6> {
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value. It is assumed that `-1.0 <= x <= 1.0`.
+    /// * `x` - Evaluate the expansion at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_6_neg1_to_1(&self, x: f32) -> f32 {
         let x_rel_2 = 2.0 * x;
         let d_5 = self.coeffs_internal[5];
