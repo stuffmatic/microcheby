@@ -26,8 +26,10 @@
 //!
 //! # Chebyshev approximation
 //!
-//! The basic idea is that a function can be expressed as an infinite weighted
-//! sum of polynomials of increasing order, a so called Chebyshev expansion. If the function is sufficiently smooth, the coefficients (weights) will
+//! Sufficiently well behaved functions can be expressed as an infinite weighted
+//! sum of so called [Chebyshev polynomials](https://en.wikipedia.org/wiki/Chebyshev_polynomials) of increasing order. 
+//! Such a sum is known as a Chebyshev expansion.
+//! If the function is smooth enough, the coefficients (weights) will
 //! typically converge to zero quickly and only the first few terms are needed to get a good approximation.
 //! For a truncated expansion with _n_ terms, an estimate of the approximation error is given by
 //! the magnitude of coefficient _n+1_.
@@ -173,8 +175,8 @@ impl<const N: usize> ChebyshevExpansion<N> {
         ChebyshevExpansion::fit_with_options(
             x_min,
             x_max,
-            |x: f32| x.cos(),
             f,
+            |x: f32| x.cos(),
             MatchBoundary::None,
         )
     }
@@ -290,75 +292,6 @@ impl<const N: usize> ChebyshevExpansion<N> {
         coeffs
     }
 
-    pub fn polynomial_coeffs(&self) -> [f32; N] {
-        let mut tn_2 = [0.0; N];
-        let mut tn_1 = [0.0; N];
-        if N > 0 {
-            tn_2[0] = 1.0;
-        }
-        if N > 1 {
-            tn_1[1] = 1.0;
-        }
-
-        let mut result = [0.0; N];
-        for i in 0..N {
-            let tn = match i {
-                0 => tn_2,
-                1 => tn_1,
-                _ => {
-                    let mut tn_next = [0.0; N];
-                    for j in 0..N {
-                        tn_next[j] -= tn_2[j];
-                        if j < N - 1 {
-                            tn_next[j + 1] += 2.0 * tn_1[j];
-                        }
-                    }
-                    tn_next
-                }
-            };
-
-            let ci = if i == 0 {
-                // compensate for 'pre baked' multiplication by 0.5
-                2.0 * self.coeffs_internal[i]
-            } else {
-                self.coeffs_internal[i]
-            };
-
-            for j in 0..N {
-                result[j] += ci * tn[j];
-            }
-            if i == 0 {
-                result[0] -= 0.5 * ci;
-            }
-            if i > 1 {
-                tn_2 = tn_1;
-                tn_1 = tn;
-            }
-        }
-        let x_min = self.x_min;
-        let x_max = 4.0 / self.range_scale + self.x_min;
-        let a = 0.5 * (x_min + x_max);
-        let b = 0.5 * (x_max - x_min);
-        let mut mapped_result = [0.0; N];
-        for i in 0..N {
-            // substitute x in x^i by (ax + b)
-            for j in 0..=i {
-                // https://en.wikipedia.org/wiki/Binomial_coefficient
-                let bin_coeff = if j == 0 {
-                    1.0
-                } else {
-                    let mut den = 1;
-                    for k in 1..=j {
-                        den *= k;
-                    }
-                    ((i * (i - 1)) as f32) / (den as f32)
-                };
-                // mapped_result[i - 1] +=
-            }
-        }
-        mapped_result
-    }
-
     /// Evaluates the Chebyshev expansion at a given point.
     ///
     /// # Arguments
@@ -456,7 +389,7 @@ impl ChebyshevExpansion<2> {
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value.
+    /// * `x` - Evaluate the approximation at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_2_neg1_to_1(&self, x: f32) -> f32 {
         let x_rel_2 = 2.0 * x;
         0.5 * x_rel_2 * self.coeffs_internal[1] + self.coeffs_internal[0]
@@ -479,7 +412,7 @@ impl ChebyshevExpansion<3> {
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value.
+    /// * `x` - Evaluate the approximation at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_3_neg1_to_1(self, x: f32) -> f32 {
         let x_rel_2 = 2.0 * x;
         let d_2 = self.coeffs_internal[2];
@@ -505,7 +438,7 @@ impl ChebyshevExpansion<4> {
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value.
+    /// * `x` - Evaluate the approximation at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_4_neg1_to_1(&self, x: f32) -> f32 {
         let x_rel_2 = 2.0 * x;
         let d_3 = self.coeffs_internal[3];
@@ -533,7 +466,7 @@ impl ChebyshevExpansion<5> {
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value.
+    /// * `x` - Evaluate the approximation at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_5_neg1_to_1(&self, x: f32) -> f32 {
         let x_rel_2 = 2.0 * x;
         let d_4 = self.coeffs_internal[4];
@@ -548,11 +481,11 @@ impl ChebyshevExpansion<6> {
     /// Optimized, loop free evaluation of six term expansions.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value.
+    /// * `x` - Evaluate the approximation at this x value. 
     pub fn eval_6(&self, x: f32) -> f32 {
         let x_rel_2 = -2.0 + (x - self.x_min) * self.range_scale;
         let d_5 = self.coeffs_internal[5];
-        let d_4 = x_rel_2 * d_5 /*-0*/+ self.coeffs_internal[4];
+        let d_4 = x_rel_2 * d_5 + self.coeffs_internal[4];
         let d_3 = x_rel_2 * d_4 - d_5 + self.coeffs_internal[3];
         let d_2 = x_rel_2 * d_3 - d_4 + self.coeffs_internal[2];
         let d_1 = x_rel_2 * d_2 - d_3 + self.coeffs_internal[1];
@@ -563,7 +496,7 @@ impl ChebyshevExpansion<6> {
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
     /// 
     /// # Arguments
-    /// * `x` - Evaluate the approximation at this x value.
+    /// * `x` - Evaluate the approximation at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_6_neg1_to_1(&self, x: f32) -> f32 {
         let x_rel_2 = 2.0 * x;
         let d_5 = self.coeffs_internal[5];
@@ -578,15 +511,6 @@ impl ChebyshevExpansion<6> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_polynomial_coeffs() {
-        let approx = ChebyshevExpansion::<5>::fit(-1.0, 1.0, |x| {
-            1.0 + 2.0 * x + 3.0 * x * x + 4.0 * x * x * x
-        });
-        let c = approx.polynomial_coeffs();
-        let a = 0;
-    }
 
     #[test]
     fn test_quadratic_perfect_fit() {
@@ -625,14 +549,7 @@ mod tests {
 
     #[test]
     fn test_eval_neg1_to_1() {
-        let x_min = -1.0;
-        let x_max = 1.0;
-        let x = 0.5 * (x_min + x_max);
-        let f = |x: f32| x.sin();
-        let approx = ChebyshevExpansion::<10>::fit(x_min, x_max, f);
-        assert!(approx.eval(x) == approx.eval_neg1_to_1(x));
-        let approx_2 = ChebyshevExpansion::<10>::fit(-0.9, x_max, f);
-        assert!(approx_2.eval(x) != approx_2.eval_neg1_to_1(x));
+        assert!(false, "TODO")
     }
 
     #[test]
