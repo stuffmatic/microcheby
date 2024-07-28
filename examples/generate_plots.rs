@@ -41,9 +41,13 @@ fn main() {
     // Generate csv files for plotting with gnuplot
     let output_path = "plots/plot_data.csv";
     let n_samples = 120;
-    let f = |x: f32| (2.0 * x).sin();
-    let x_min = -0.1;
-    let x_max = 7.1;
+    
+    let f = |x: f32| {
+        //\sin\left(4x^{3}\right)e^{-x^{4}}
+        (4.0 * x.powf(3.0)).sin() * ((-x.powf(4.0)).exp())
+    };
+    let x_min = 0.5;
+    let x_max = 1.5;
 
     let mut columns: Vec<Vec<f32>> = vec![];
     let x_values = x_values(x_min, x_max, n_samples);
@@ -59,6 +63,9 @@ fn main() {
     columns.push(approx_values::<7, _>(&x_values, f));
     columns.push(approx_values::<8, _>(&x_values, f));
     columns.push(approx_values::<9, _>(&x_values, f));
+    columns.push(approx_values::<10, _>(&x_values, f));
+    columns.push(approx_values::<11, _>(&x_values, f));
+    columns.push(approx_values::<12, _>(&x_values, f));
 
     write_csv_columns(&columns, output_path);
 }

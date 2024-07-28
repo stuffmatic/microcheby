@@ -26,6 +26,10 @@ microcheby = { version = "0.1", default-features = false }
 
 # Chebychev approximation
 
-The basic idea is that a function can be expressed as an infinite weighted sum of polynomials of increasing order, a so called Chebyshev expansion. If the function is sufficiently smooth, the coefficients (weights) will typically converge to zero quickly and only the first few terms are needed to get a good approximation. For a truncated expansion with _n_ terms, an estimate of the approximation error is given by the magnitude of coefficient _n+1_.
+Sufficiently well behaved functions can be expressed as an infinite weighted sum of so called [Chebyshev polynomials](https://en.wikipedia.org/wiki/Chebyshev_polynomials) of increasing order. Such a sum is known as a Chebyshev expansion. If the function is smooth enough, the coefficients (weights) will typically converge to zero quickly and only the first few terms are needed to get a good approximation. For a truncated expansion with _n_ terms, an estimate of the approximation error is given by the magnitude of coefficient _n+1_.
 
-![](plots/sinx.svg)
+Below are some graphs showing how the approximation converges to the target function 
+as the number of terms in the expansion increases. For smoother target functions, convergence
+is generally faster.
+
+![](plots/approximations.png)
