@@ -336,7 +336,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
     /// * `eps` - Threat coefficients with an absolute value less than this as being zero.
     pub fn is_odd(&self, eps: f32) -> bool {
         for ci in self.coeffs_internal.iter().step_by(2) {
-            if ci.abs() > eps {
+            if *ci > eps || *ci < -eps {
                 return false;
             }
         }
@@ -352,7 +352,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
     pub fn is_even(&self, eps: f32) -> bool {
         for (i, ci) in self.coeffs_internal.iter().skip(1).step_by(2).enumerate() {
             let scale = if i == 0 { 2.0 } else { 1.0 }; // account for "baked" c0 scale of 0.5
-            if scale * ci.abs() > eps {
+            if scale * ci > eps || scale * ci < -eps {
                 return false;
             }
         }
