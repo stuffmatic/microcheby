@@ -259,7 +259,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
     ///
     /// * `x_min` - The start of the approximated function's range.
     /// * `range_scale` - Equal to `4.0 / (x_max - x_min)`, where `x_max` is the end of the approximated function's range.
-    /// * `coeffs_internal` - The same as the Chebychev weights, except that the element at index 0 has been divided by 2.
+    /// * `coeffs_internal` - The same as the Chebyshev weights, except that the element at index 0 has been divided by 2.
     pub const fn const_new(x_min: f32, range_scale: f32, coeffs_internal: [f32; N]) -> Self {
         ChebyshevExpansion {
             x_min,
