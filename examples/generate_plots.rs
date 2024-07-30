@@ -41,7 +41,7 @@ fn main() {
     // Generate csv files for plotting with gnuplot
     let output_path = "plots/plot_data.csv";
     let n_samples = 120;
-    
+
     let f = |x: f32| {
         //\sin\left(4x^{3}\right)e^{-x^{4}}
         (4.0 * x.powf(3.0)).sin() * ((-x.powf(4.0)).exp())

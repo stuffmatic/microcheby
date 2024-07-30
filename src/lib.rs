@@ -174,13 +174,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
     where
         F: Fn(f32) -> f32,
     {
-        ChebyshevExpansion::fit_with_options(
-            x_min,
-            x_max,
-            f,
-            |x: f32| x.cos(),
-            MatchBoundary::None,
-        )
+        ChebyshevExpansion::fit_with_options(x_min, x_max, f, |x: f32| x.cos(), MatchBoundary::None)
     }
 
     /// Creates an `N` term `ChebyshevExpansion` instance approximating a given function on a given range,
