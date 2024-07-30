@@ -1,38 +1,40 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-//! microcheby is a crate for computing and evaluating polynomial approximations 
+//! microcheby is a crate for computing and evaluating polynomial approximations
 //! of functions of one variable using using [Chebyshev polynomials](https://en.wikipedia.org/wiki/Chebyshev_polynomials).
-//! The code is `no_std` compatible and optimized for resource
+//! The code is `no_std` compatible, does not depend on `alloc` and is optimized for resource
 //! constrained environments where every clock cycle counts. Optimizations include:
 //!
 //! * [Clenshaw recursion](https://en.wikipedia.org/wiki/Clenshaw_algorithm) for evaluating approximations.
 //! * Efficient loop free functions for evaluating low order approximations.
 //! * Even more efficient loop free evaluation if the range happens to be [-1, 1].
 //! * Approximation evaluation without divisions.
-//! 
+//!
 //! # Installing
-//! 
+//!
 //! Add the following line to your Cargo.toml file:
-//! 
-//! ```
+//!
+//! ```text
 //! microcheby = "0.1"
 //! ```
-//! 
+//!
 //! To use microcheby in a `no_std` environment:
-//! 
-//! ```
+//!
+//! ```text
 //! microcheby = { version = "0.1", default-features = false }
 //! ```
 //!
 //! # Chebyshev approximation
 //!
 //! Sufficiently well behaved functions can be expressed as an infinite weighted
-//! sum of so called [Chebyshev polynomials](https://en.wikipedia.org/wiki/Chebyshev_polynomials) of increasing order. 
+//! sum of so called [Chebyshev polynomials](https://en.wikipedia.org/wiki/Chebyshev_polynomials) of increasing order.
 //! Such a sum is known as a Chebyshev expansion.
-//! If the function is smooth enough, the coefficients (weights) of the expansion will
+//! If the target function is smooth enough, the coefficients (weights) of the expansion will
 //! typically converge to zero quickly and only the first few terms are needed to get a good approximation.
 //! For a truncated expansion with _n_ terms, an estimate of the approximation error is given by
 //! the magnitude of coefficient _n+1_.
+//!
+//! For a more detailed introduction, see [5.8 Chebyshev Approximation](http://www.ff.bg.ac.rs/Katedre/Nuklearna/SiteNuklearna/bookcpdf/c5-8.pdf) in Numerical Recipes in C: The Art of Scientific Computing.
 //!
 //! # Basic usage
 //!
@@ -42,7 +44,7 @@
 //! // Compute a 6 term expansion approximating the square root of x on the interval [0.1, 1.0]
 //! let sqrt_exp = ChebyshevExpansion::<6>::fit(0.1, 1.0, |x| x.sqrt());
 //! // Get the approximated value at x=0.7
-//! let value_approx = exp.eval(0.7);
+//! let value_approx = sqrt_exp.eval(0.7);
 //! // Get the actual value at x=0.7
 //! let value_actual = 0.7_f32.sqrt();
 //! // Compute the approximation error
@@ -53,7 +55,7 @@
 //! # Precomputing and instantiating expansions
 //!
 //! Computing expansion coefficients requires an accurate cosine function and potentially costly
-//! function evaluations, so it is sometimes desirable to precompute the coefficients
+//! target function evaluations, so it is sometimes desirable to precompute the coefficients
 //! and then use them to instantiate the expansion.
 //!
 //! ```
@@ -85,7 +87,7 @@
 //! // Compute a 6 term expansion approximating the square root of x on the interval [0.1, 1.0]
 //! let sqrt_exp = ChebyshevExpansion::<6>::fit(0.1, 1.0, |x| x.sqrt());
 //!
-//! // x_min, x_scale and coeffs_internal are needed to instantiate the expansion
+//! // x_min, range_scale and coeffs_internal are needed to instantiate the expansion
 //! // at compile time since floating point operations are not allowed in constant expressions.
 //! // You can either print them to the terminal like this or get them using a debugger.
 //! println!("{:?}", sqrt_exp);
@@ -109,7 +111,7 @@ use core::fmt;
 /// Boundary matching is the process of adding a linear
 /// term _ax + b_ to the Chebyshev expansion to make the it
 /// match the original function exactly at `x_min` and/or `x_max`.
-/// Obviously, this increases the approximation error, but
+/// This probably increases the approximation error, but
 /// can be useful when exact matches at `x_min` and/or `x_max` are
 /// more important than overall accuracy.
 #[derive(PartialEq)]
@@ -125,7 +127,7 @@ pub enum MatchBoundary {
 }
 
 /// An N term Chebyshev expansion.
-/// See 5.8 Chebyshev Approximation in [Numerical Recipes in C: The Art of Scientific Computing](http://www.ff.bg.ac.rs/Katedre/Nuklearna/SiteNuklearna/bookcpdf/c5-8.pdf).
+/// See [5.8 Chebyshev Approximation](http://www.ff.bg.ac.rs/Katedre/Nuklearna/SiteNuklearna/bookcpdf/c5-8.pdf) in Numerical Recipes in C: The Art of Scientific Computing.
 #[derive(Clone, Copy)]
 pub struct ChebyshevExpansion<const N: usize> {
     /// Chebyshev expansion coefficients, except that the first coefficient has been multiplied by 0.5.
@@ -188,7 +190,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
     /// * `x_min` - The start of the range to approximate.
     /// * `x_max` - The end of the range to approximate.
     /// * `f` - The function to approximate.
-    /// * `cos` - A function for computing _cos(x)_. Allows the caller to provide a 
+    /// * `cos` - A function for computing _cos(x)_. Allows the caller to provide a
     /// custom cosine implementation if the standard one is not available, which is the case in `no_std` environments.
     /// * `match_boundary` - Indicates if the expansion should be altered so that the approximation matches the given function at `x_min` and/or `x_max`.
     pub fn fit_with_options<F, G>(
@@ -239,9 +241,9 @@ impl<const N: usize> ChebyshevExpansion<N> {
 
     /// Create an `N` term `ChebyshevExpansion` instance using a given range and coefficients.
     /// The values for the arguments can be accessed by the associated getter function.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `x_min` - The start of the range to approximate.
     /// * `x_max` - The end of the range to approximate.
     /// * `coeffs` - Chebyshev expansion coefficients
@@ -253,10 +255,10 @@ impl<const N: usize> ChebyshevExpansion<N> {
 
     /// Creates an `N` term `ChebyshevExpansion` instance statically. Due to floating point
     /// limitations in const expressions, `range_scale` and `coeffs_internal` must be passed "raw".
-    /// The values for these can either be accessed using a debugger or printed using 
-    /// ```
+    /// The values for these can either be accessed using a debugger or printed using
+    /// ```text
     /// println!("{exp:?}")
-    /// ``` 
+    /// ```
     /// and then copy-pasted (`exp` is a `ChebyshevExpansion` instance).
     ///
     /// # Arguments
@@ -295,7 +297,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
     /// Evaluates the Chebyshev expansion at a given point.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `x` - Evaluate the expansion at this x value.
     pub fn eval(&self, x: f32) -> f32 {
         let x_rel_2 = -2.0 + (x - self.x_min) * self.range_scale;
@@ -315,7 +317,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
     /// Evaluates the first `n` terms of the Chebyshev expansion at a given point.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `x` - Evaluate the expansion at this x value.
     /// * `n` - Evaluate this many terms.
     pub fn eval_trunc(&self, x: f32, n: usize) -> f32 {
@@ -335,7 +337,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
 
     /// Checks if the Chebyshev expansion is odd with a given tolerance,
     /// i.e if coefficients 0, 2, 4... are (close to) zero.
-    /// 
+    ///
     /// # Arguments
     /// * `eps` - Threat coefficients with an absolute value less than this as being zero.
     pub fn is_odd(&self, eps: f32) -> bool {
@@ -350,7 +352,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
 
     /// Checks if the Chebyshev expansion is even with a given tolerance,
     /// i.e if coefficients 1, 3, 5... are (close to) zero.
-    /// 
+    ///
     /// # Arguments
     /// * `eps` - Threat coefficients with an absolute value less than this as being zero.
     pub fn is_even(&self, eps: f32) -> bool {
@@ -377,7 +379,7 @@ impl<const N: usize> ChebyshevExpansion<N> {
 
 impl ChebyshevExpansion<2> {
     /// Optimized, loop free evaluation of two term expansions.
-    /// 
+    ///
     /// # Arguments
     /// * `x` - Evaluate the expansion at this x value.
     pub fn eval_2(&self, x: f32) -> f32 {
@@ -385,9 +387,9 @@ impl ChebyshevExpansion<2> {
         0.5 * x_rel_2 * self.coeffs_internal[1] + self.coeffs_internal[0]
     }
 
-    /// Optimized, loop free evaluation of two term expansions 
+    /// Optimized, loop free evaluation of two term expansions
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
-    /// 
+    ///
     /// # Arguments
     /// * `x` - Evaluate the expansion at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_2_neg1_to_1(&self, x: f32) -> f32 {
@@ -398,7 +400,7 @@ impl ChebyshevExpansion<2> {
 
 impl ChebyshevExpansion<3> {
     /// Optimized, loop free evaluation of three term expansions.
-    /// 
+    ///
     /// # Arguments
     /// * `x` - Evaluate the expansion at this x value.
     pub fn eval_3(&self, x: f32) -> f32 {
@@ -408,9 +410,9 @@ impl ChebyshevExpansion<3> {
         0.5 * x_rel_2 * d_1 - d_2 + self.coeffs_internal[0]
     }
 
-    /// Optimized, loop free evaluation of three term expansions 
+    /// Optimized, loop free evaluation of three term expansions
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
-    /// 
+    ///
     /// # Arguments
     /// * `x` - Evaluate the expansion at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_3_neg1_to_1(self, x: f32) -> f32 {
@@ -423,7 +425,7 @@ impl ChebyshevExpansion<3> {
 
 impl ChebyshevExpansion<4> {
     /// Optimized, loop free evaluation of four term expansions.
-    /// 
+    ///
     /// # Arguments
     /// * `x` - Evaluate the expansion at this x value.
     pub fn eval_4(&self, x: f32) -> f32 {
@@ -434,9 +436,9 @@ impl ChebyshevExpansion<4> {
         0.5 * x_rel_2 * d_1 - d_2 + self.coeffs_internal[0]
     }
 
-    /// Optimized, loop free evaluation of four term expansions 
+    /// Optimized, loop free evaluation of four term expansions
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
-    /// 
+    ///
     /// # Arguments
     /// * `x` - Evaluate the expansion at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_4_neg1_to_1(&self, x: f32) -> f32 {
@@ -450,7 +452,7 @@ impl ChebyshevExpansion<4> {
 
 impl ChebyshevExpansion<5> {
     /// Optimized, loop free evaluation of five term expansions.
-    /// 
+    ///
     /// # Arguments
     /// * `x` - Evaluate the expansion at this x value.
     pub fn eval_5(&self, x: f32) -> f32 {
@@ -462,9 +464,9 @@ impl ChebyshevExpansion<5> {
         0.5 * x_rel_2 * d_1 - d_2 + self.coeffs_internal[0]
     }
 
-    /// Optimized, loop free evaluation of five term expansions 
+    /// Optimized, loop free evaluation of five term expansions
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
-    /// 
+    ///
     /// # Arguments
     /// * `x` - Evaluate the expansion at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_5_neg1_to_1(&self, x: f32) -> f32 {
@@ -479,9 +481,9 @@ impl ChebyshevExpansion<5> {
 
 impl ChebyshevExpansion<6> {
     /// Optimized, loop free evaluation of six term expansions.
-    /// 
+    ///
     /// # Arguments
-    /// * `x` - Evaluate the expansion at this x value. 
+    /// * `x` - Evaluate the expansion at this x value.
     pub fn eval_6(&self, x: f32) -> f32 {
         let x_rel_2 = -2.0 + (x - self.x_min) * self.range_scale;
         let d_5 = self.coeffs_internal[5];
@@ -492,9 +494,9 @@ impl ChebyshevExpansion<6> {
         0.5 * x_rel_2 * d_1 - d_2 + self.coeffs_internal[0]
     }
 
-    /// Optimized, loop free evaluation of six term expansions 
+    /// Optimized, loop free evaluation of six term expansions
     /// where `x_min` is -1 and `x_max` is 1, which enables further optimizations.
-    /// 
+    ///
     /// # Arguments
     /// * `x` - Evaluate the expansion at this x value. It is assumed that `-1.0 <= x <= 1.0`.
     pub fn eval_6_neg1_to_1(&self, x: f32) -> f32 {
@@ -548,11 +550,6 @@ mod tests {
     }
 
     #[test]
-    fn test_eval_neg1_to_1() {
-        assert!(false, "TODO")
-    }
-
-    #[test]
     fn test_eval_trunc() {
         let x_min = 0.1;
         let x_max = 1.2;
@@ -587,6 +584,29 @@ mod tests {
         assert!(approx_5.eval(x) == approx_5.eval_5(x));
         let approx_6 = ChebyshevExpansion::<6>::fit(x_min, x_max, f);
         assert!(approx_6.eval(x) == approx_6.eval_6(x));
+    }
+
+    #[test]
+    fn test_loop_free_eval_neg1_to_1() {
+        let x_min = -1.0;
+        let x_max = 1.0;
+        let x = 0.893;
+        let f = |x: f32| x.cos();
+        let approx_2 = ChebyshevExpansion::<2>::fit(x_min, x_max, f);
+        assert!(approx_2.eval(x) == approx_2.eval_2(x));
+        assert!(approx_2.eval(x) == approx_2.eval_2_neg1_to_1(x));
+        let approx_3 = ChebyshevExpansion::<3>::fit(x_min, x_max, f);
+        assert!(approx_3.eval(x) == approx_3.eval_3(x));
+        assert!(approx_3.eval(x) == approx_3.eval_3_neg1_to_1(x));
+        let approx_4 = ChebyshevExpansion::<4>::fit(x_min, x_max, f);
+        assert!(approx_4.eval(x) == approx_4.eval_4(x));
+        assert!(approx_4.eval(x) == approx_4.eval_4_neg1_to_1(x));
+        let approx_5 = ChebyshevExpansion::<5>::fit(x_min, x_max, f);
+        assert!(approx_5.eval(x) == approx_5.eval_5(x));
+        assert!(approx_5.eval(x) == approx_5.eval_5_neg1_to_1(x));
+        let approx_6 = ChebyshevExpansion::<6>::fit(x_min, x_max, f);
+        assert!(approx_6.eval(x) == approx_6.eval_6(x));
+        assert!(approx_6.eval(x) == approx_6.eval_6_neg1_to_1(x));
     }
 
     #[test]
