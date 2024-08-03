@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 //! microcheby is a crate for computing and evaluating polynomial approximations
-//! of functions of one variable using using [Chebyshev polynomials](https://en.wikipedia.org/wiki/Chebyshev_polynomials).
+//! of functions of one variable using [Chebyshev polynomials](https://en.wikipedia.org/wiki/Chebyshev_polynomials).
 //! The code is `no_std` compatible, does not depend on `alloc` and is optimized for resource
 //! constrained environments where every clock cycle counts. Optimizations include:
 //!

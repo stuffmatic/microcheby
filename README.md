@@ -3,7 +3,7 @@
 [![Crates.io](https://img.shields.io/crates/v/microcheby)](https://crates.io/crates/microcheby)
 [![Docs.rs](https://docs.rs/microcheby/badge.svg)](https://docs.rs/microcheby)
 
-microcheby is a Rust library for computing and evaluating polynomial approximations of functions of one variable using using [Chebyshev polynomials](https://en.wikipedia.org/wiki/Chebyshev_polynomials). The code is `no_std` compatible, does not depend on `alloc` and is optimized for resource constrained environments where every clock cycle counts. Optimizations include:
+microcheby is a Rust library for computing and evaluating polynomial approximations of functions of one variable using [Chebyshev polynomials](https://en.wikipedia.org/wiki/Chebyshev_polynomials). The code is `no_std` compatible, does not depend on `alloc` and is optimized for resource constrained environments where every clock cycle counts. Optimizations include:
 
 * [Clenshaw recursion](https://en.wikipedia.org/wiki/Clenshaw_algorithm) for evaluating approximations.
 * Efficient loop free functions for evaluating low order approximations.
